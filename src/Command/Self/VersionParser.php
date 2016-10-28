@@ -27,7 +27,7 @@ class VersionParser
     /**
      * @var string
      */
-    private $modifier = '[._-]?(?:(stable|beta|b|RC|alpha|a|patch|pl|p)(?:[.-]?(\d+))?)?([.-]?dev)?';
+    private $modifier = '[._-]?(?:(beta|b|RC|alpha|a|patch|pl|p)(?:[.-]?(\d+))?)?([.-]?dev)?';
 
     /**
      * @param array $versions
@@ -175,14 +175,13 @@ class VersionParser
 
     private function stable($version)
     {
-        $version = preg_replace('{#.+$}i', '', $version);
-        if ($this->development($version)) {
+        $realVersion = preg_replace('{#.+$}i', '', $version);
+
+        if ($this->development($realVersion)  || $this->unstable($version)) {
             return false;
         }
-        preg_match('{'.$this->modifier.'$}i', strtolower($version), $match);
-        if (!empty($match[3])) {
-            return false;
-        }
+
+        preg_match('{'.$this->modifier.'$}i', strtolower($realVersion), $match);
         if (!empty($match[1])) {
             if ('beta' === $match[1] || 'b' === $match[1]
                 || 'alpha' === $match[1] || 'a' === $match[1]
@@ -205,4 +204,21 @@ class VersionParser
         }
         return false;
     }
+
+    /**
+     * Check if is an unstable version.
+     *
+     * @param string $version Version to check.
+     *
+     * @return bool
+     */
+    protected function unstable($version)
+    {
+        if ('-unstable' === substr($version, -9)) {
+            return true;
+        }
+
+        return false;
+    }
+
 }
