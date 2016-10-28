@@ -25,6 +25,8 @@ class VersionParser
     private $versions;
 
     /**
+     * Regex to check a valid version.
+     *
      * @var string
      */
     private $modifier = '[._-]?(?:(beta|b|RC|alpha|a|patch|pl|p)(?:[.-]?(\d+))?)?([.-]?dev)?';
@@ -97,7 +99,8 @@ class VersionParser
      * Checks if given version string represents an unstable or dev-level
      * numbered version
      *
-     * @param  string $version
+     * @param string $version Current version.
+     *
      * @return bool
      */
     public function isUnstable($version)
@@ -173,7 +176,14 @@ class VersionParser
         return $candidate;
     }
 
-    private function stable($version)
+    /**
+     * Check if version is stable.
+     *
+     * @param string $version Version to check.
+     *
+     * @return bool
+     */
+    protected function stable($version)
     {
         $realVersion = preg_replace('{#.+$}i', '', $version);
 
@@ -194,7 +204,14 @@ class VersionParser
         return true;
     }
 
-    private function development($version)
+    /**
+     * Check if is a develop version.
+     *
+     * @param string $version Version to check.
+     *
+     * @return bool
+     */
+    protected function development($version)
     {
         if ('dev-' === substr($version, 0, 4) || '-dev' === substr($version, -4)) {
             return true;
