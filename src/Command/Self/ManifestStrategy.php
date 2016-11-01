@@ -8,6 +8,7 @@ namespace Drupal\Console\Command\Self;
 
 use Humbug\SelfUpdate\Exception\HttpRequestException;
 use Humbug\SelfUpdate\Exception\JsonParsingException;
+use Humbug\SelfUpdate\Exception\RuntimeException;
 use Humbug\SelfUpdate\Strategy\StrategyInterface;
 use Humbug\SelfUpdate\Updater;
 
@@ -142,16 +143,24 @@ class ManifestStrategy implements StrategyInterface
     private function getManifest()
     {
         if (!isset($this->manifest)) {
+
+            if (!$this->manifestUrl) {
+                throw new RuntimeException('Manifest URL has not been defined');
+            }
+
             $manifestContents = file_get_contents($this->manifestUrl);
             if ($manifestContents === false) {
-                throw new \RuntimeException(sprintf('Failed to download manifest: %s', $this->manifestUrl));
+                throw new \RuntimeException(
+                    sprintf('Failed to download manifest: %s', $this->manifestUrl)
+                );
             }
 
             $this->manifest = json_decode($manifestContents, true);
             if (null === $this->manifest || json_last_error() !== JSON_ERROR_NONE) {
                 throw new JsonParsingException(
                     'Error parsing package manifest'
-                    . (function_exists('json_last_error_msg') ? ': ' . json_last_error_msg() : '')
+                    . (function_exists('json_last_error_msg') ?
+                        ': ' . json_last_error_msg() : '')
                 );
             }
         }
@@ -168,7 +177,9 @@ class ManifestStrategy implements StrategyInterface
    */
     public function getCurrentRemoteVersion(Updater $updater)
     {
-        $versionParser = new VersionParser(array_keys($this->getAvailableVersions()));
+        $versionParser = new VersionParser(
+            array_keys($this->getAvailableVersions())
+        );
 
         return $versionParser->getMostRecentStable();
     }
@@ -183,5 +194,29 @@ class ManifestStrategy implements StrategyInterface
     public function getCurrentLocalVersion(Updater $updater)
     {
         return $this->localVersion;
+    }
+
+    /**
+     * Set the url manifest.
+     *
+     * @param string $url Url manifest.
+     *
+     * @return void
+     */
+    public function setManifestURL($url)
+    {
+        $this->manifestUrl = $url;
+    }
+
+    /**
+     * Set current version.
+     *
+     * @param string $version String version.
+     *
+     * @return void
+     */
+    public function setCurrentLocalVersion($version)
+    {
+        $this->localVersion = $version;
     }
 }
